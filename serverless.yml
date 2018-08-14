@@ -1,0 +1,88 @@
+# For full config options, check the docs:
+#    docs.serverless.com
+
+service: reminderbot
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+provider:
+  name: aws
+  runtime: go1.x
+  timeout: 30
+  versionFunctions: false
+  memorySize: 128
+
+  # you can overwrite defaults here
+  #  stage: dev
+  #  region: us-east-1
+
+  # you can add statements to the Lambda function's IAM Role here
+  iamRoleStatements:
+  - Effect: "Allow"
+    Action:
+    - "dynamodb:DeleteItem"
+    - "dynamodb:GetItem"
+    - "dynamodb:PutItem"
+    - "dynamodb:Query"
+    - "dynamodb:Scan"
+    - "dynamodb:UpdateItem"
+    Resource:
+    - Fn::GetAtt:
+      - queueTable
+      - Arn
+
+  # you can define service wide environment variables here
+  environment:
+    stage: ${self:custom.stage}
+    namespace: ${self:custom.namespace}
+    reminderbot_queue: ${self:custom.tableName}
+    SLACK_APP_ID: ${env:SLACK_APP_ID}
+    SLACK_CLIENT_ID: ${env:SLACK_CLIENT_ID}
+    SLACK_CLIENT_SECRET: ${env:SLACK_CLIENT_SECRET}
+    SLACK_SIGNING_SECRET: ${env:SLACK_SIGNING_SECRET}
+    SLACK_VERIFICATION_TOKEN: ${env:SLACK_VERIFICATION_TOKEN}
+    NEXMO_API_KEY: ${env:NEXMO_API_KEY}
+    NEXMO_API_SECRET: ${env:NEXMO_API_SECRET}
+    NEXMO_API_FROM: ${env:NEXMO_API_FROM}
+
+custom:
+  stage: ${opt:stage, self:provider.stage}
+  namespace: ${self:service}_${self:custom.stage}
+  tableName: ${self:custom.namespace}_reminderbot_queue
+
+package:
+  exclude:
+  - ./**
+  include:
+  - ./bin/**
+
+functions:
+  cron:
+    handler: bin/cron
+    events:
+    - schedule: cron(* * * * ? *) # every minute
+
+  sms:
+    handler: bin/sms
+    events:
+    - http:
+        path: sms
+        method: POST
+
+resources:
+  Resources:
+    queueTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: '${self:custom.tableName}'
+        AttributeDefinitions:
+        - AttributeName: ID
+          AttributeType: S
+        KeySchema:
+        - AttributeName: ID
+          KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
