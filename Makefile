@@ -4,7 +4,7 @@ build:
 slsdeploy:
 	docker-compose run app sls deploy
 
-deploy: build slsdeploy
+deploy: dep build slsdeploy
 
 destroy:
 	docker-compose run app sls remove
