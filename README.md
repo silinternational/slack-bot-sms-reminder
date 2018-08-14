@@ -16,6 +16,7 @@ the functions to Lambda
 10. Test the integration by typing in `/sms [yourphonenumber] 1m your message` and you should get a response telling 
 you when it was scheduled for and then in that much time you should also receive the text message. Note that if you 
 are using a free trial Nexmo account you wont be able to text any numbers than the one you registered with. 
+11. To destroy all the provisioned AWS resources run `make destroy`
 
 ## About
 This app was created as a demo for a presentation given to the Charlotte Golang Meetup group in August 2018. The slides 
