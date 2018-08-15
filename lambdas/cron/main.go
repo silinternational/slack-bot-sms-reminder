@@ -19,13 +19,13 @@ func handler(ctx context.Context, event events.CloudWatchEvent) error {
 	// Load env config
 	err := reminderbot.LoadEnvConfig()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
 	messages, err := db.ListMessages()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 
@@ -40,7 +40,7 @@ func ProcessQueuedMessages(messages []reminderbot.SmsMessage) error {
 			err := nexmo.SendSms("", reminderbot.Env.NexmoAPIKey, reminderbot.Env.NexmoAPISecret,
 				reminderbot.Env.NexmoAPIFrom, m.PhoneNumber, m.Message)
 			if err != nil {
-				log.Fatal("Failed to send SMS, error: ", err.Error())
+				log.Println("Failed to send SMS, error: ", err.Error())
 				continue
 			}
 
@@ -48,7 +48,7 @@ func ProcessQueuedMessages(messages []reminderbot.SmsMessage) error {
 
 			deleted, err := db.DeleteItem(m.ID)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 				return err
 			}
 			if deleted {
